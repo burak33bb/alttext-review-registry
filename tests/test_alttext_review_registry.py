@@ -121,6 +121,20 @@ def test_assessment_schema_rejects_unexpected_fields_and_invalid_types():
         raise AssertionError("Unexpected schema field was accepted.")
 
 
+def test_assessment_schema_accepts_detailed_reasoning_within_contract_limit():
+    module, _ = load_contract()
+    value = {
+        "image_role": "INFORMATIVE",
+        "alt_attribute_present": False,
+        "observed_alt_text": "",
+        "assessment": "DEFECTIVE",
+        "image_locator": "A clearly identifiable image in the page's main content area",
+        "evidence": ["<img src='cat.jpg'>"],
+        "reasoning": "R" * 1000,
+    }
+    assert module._validate_assessment(value) == value
+
+
 def test_informative_defect_is_reported_after_consensus():
     module, nondet = load_contract()
     contract = module.AltTextReviewRegistry("microsoftedge.github.io")

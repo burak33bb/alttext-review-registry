@@ -116,6 +116,8 @@ Rules:
 - For DECORATIVE images, ADEQUATE requires a present alt attribute with an empty value.
 - Evidence must be short and tied to the identified image. Never claim overall WCAG
   conformance, legal compliance, or that the whole page is accessible.
+- Keep `image_locator` at or below 240 characters, each evidence excerpt at or below
+  240 characters, and `reasoning` at or below 1200 characters.
 """
             result = gl.nondet.exec_prompt(prompt, images=[screenshot])
             return _canonical_json(_validate_assessment(_parse_json_dict(result)))
@@ -264,7 +266,7 @@ def _validate_assessment(value: dict) -> dict:
     for key, max_length in [
         ("observed_alt_text", 300),
         ("image_locator", 240),
-        ("reasoning", 500),
+        ("reasoning", 1200),
     ]:
         if not isinstance(value[key], str) or len(value[key]) > max_length:
             raise ValueError("Review text field is invalid or too long.")
