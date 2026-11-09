@@ -2,7 +2,7 @@
 
 AltText Review Registry is a standalone GenLayer Intelligent Contract primitive for reviewing one reported image alternative on one public web page. It is designed for accessibility auditors and maintainers who need a reproducible, source-linked finding rather than a site-wide AI score.
 
-The registry inspects the page HTML and a rendered screenshot together with the W3C WCAG 2.2 guidance for non-text content. Validators independently fetch the page and guidance, inspect the same identified image, and reach comparative consensus on its role, exact current `alt` text, and whether that alternative is adequate. The contract checks that the caller-reported alt text still matches the live page, then stores a bounded report with evidence and a conservative decision.
+The registry inspects page HTML and a rendered screenshot against a pinned, source-linked summary of W3C WCAG 2.2 Success Criterion 1.1.1. Validators independently fetch the target page and inspect the same identified image, then reach comparative consensus on its role, exact current `alt` text, and whether that alternative is adequate. Pinning the short criterion summary avoids making the review depend on a third-party standards site being reachable from every validator. The contract checks that the caller-reported alt text still matches the live page, then stores a bounded report with evidence and a conservative decision.
 
 ## Decisions
 
@@ -30,17 +30,17 @@ Only compact excerpts and the structured result are written to state. The page s
 
 ## Example Deployment and Call
 
-For a reproducible demonstration, use the W3C WAI Before and After Demo, whose own accessibility guidance documents missing alt text on its weather image.
+For a reproducible demonstration, use Microsoft's public Edge DevTools accessibility demo. Microsoft documents this page as an accessibility test case and notes that it contains four images without alternative text.
 
 ```text
-site_domain: w3.org
-page_url: https://www.w3.org/WAI/demos/bad/before/home
-image_hint: The weather image of the cloud and sun near the top of the page
+site_domain: microsoftedge.github.io
+page_url: https://microsoftedge.github.io/Demos/devtools-a11y-testing/
+image_hint: The first cat photograph in the Cats section near the top of the page
 reported_alt_text:
-purpose_context: The image conveys weather information and is not decorative.
+purpose_context: The photograph shows the appearance of a cat and is informative, not decorative.
 ```
 
-The documented missing-alt case should produce `ALT_DEFECT_CONFIRMED`; a validator that cannot identify the same image must return an inconclusive result, which the contract stores as `NEEDS_REVIEW`.
+The documented missing-alt case should produce `ALT_DEFECT_CONFIRMED`; a validator that cannot identify the same image must return an inconclusive result, which the contract stores as `NEEDS_REVIEW`. The W3C source criterion is linked in the contract and summarized there so the contract does not fail when the W3C site blocks automated fetches.
 
 ## Limits
 

@@ -21,6 +21,13 @@ NEEDS_REVIEW = "NEEDS_REVIEW"
 MAX_REPORTS = 100
 MAX_HTML_CHARS = 18000
 WCAG_GUIDANCE_URL = "https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html"
+WCAG_GUIDANCE_SUMMARY = (
+    "WCAG 2.2 SC 1.1.1: non-text content presented to users needs a text alternative "
+    "that serves an equivalent purpose, except for defined cases such as decorative "
+    "content. Informative images need equivalent information; functional images need "
+    "their function described; decorative images use an explicitly empty alt attribute. "
+    "Reference: " + WCAG_GUIDANCE_URL
+)
 
 
 class AltTextReviewRegistry(gl.Contract):
@@ -63,7 +70,6 @@ class AltTextReviewRegistry(gl.Contract):
             html = gl.nondet.web.render(page_url, mode="html")
             html = html[:MAX_HTML_CHARS]
             screenshot = gl.nondet.web.render(page_url, mode="screenshot")
-            wcag_guidance = gl.nondet.web.render(WCAG_GUIDANCE_URL, mode="text")
             prompt = f"""
 You are reviewing one image's text alternative under WCAG 2.2 Success Criterion 1.1.1.
 This is a single-finding review, not a site-wide accessibility audit or certification.
@@ -74,8 +80,8 @@ IMAGE IDENTIFICATION HINT: {image_hint}
 ALT TEXT REPORTED BY CALLER: {json.dumps(claimed_alt)}
 CALLER'S PURPOSE CONTEXT (unverified): {context}
 
-W3C WCAG 2.2 GUIDANCE:
-{wcag_guidance[:9000]}
+PINNED WCAG 2.2 GUIDANCE SUMMARY (source URL for human verification):
+{WCAG_GUIDANCE_SUMMARY}
 
 RENDERED PAGE HTML:
 {html}

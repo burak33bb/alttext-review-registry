@@ -78,6 +78,8 @@ def test_source_parses_and_uses_multimodal_independent_consensus():
     assert 'gl.nondet.web.render(page_url, mode="screenshot")' in SOURCE
     assert "images=[screenshot]" in SOURCE
     assert "WCAG_GUIDANCE_URL" in SOURCE
+    assert "WCAG_GUIDANCE_SUMMARY" in SOURCE
+    assert 'render(WCAG_GUIDANCE_URL' not in SOURCE
     assert "DynArray()" not in SOURCE
 
 
@@ -92,10 +94,10 @@ def test_report_states_are_specific_and_do_not_claim_site_compliance():
 
 def test_website_domain_is_exact_and_https_only():
     module, _ = load_contract()
-    assert module._normalize_domain("https://www.w3.org/WAI/") == "w3.org"
-    assert module._is_allowed_page("https://www.w3.org/WAI/page", "w3.org")
-    assert not module._is_allowed_page("http://www.w3.org/WAI/page", "w3.org")
-    assert not module._is_allowed_page("https://w3.org.attacker.example/page", "w3.org")
+    assert module._normalize_domain("https://microsoftedge.github.io/Demos/") == "microsoftedge.github.io"
+    assert module._is_allowed_page("https://microsoftedge.github.io/Demos/page", "microsoftedge.github.io")
+    assert not module._is_allowed_page("http://microsoftedge.github.io/Demos/page", "microsoftedge.github.io")
+    assert not module._is_allowed_page("https://microsoftedge.github.io.attacker.example/page", "microsoftedge.github.io")
 
 
 def test_assessment_schema_rejects_unexpected_fields_and_invalid_types():
@@ -121,7 +123,7 @@ def test_assessment_schema_rejects_unexpected_fields_and_invalid_types():
 
 def test_informative_defect_is_reported_after_consensus():
     module, nondet = load_contract()
-    contract = module.AltTextReviewRegistry("w3.org")
+    contract = module.AltTextReviewRegistry("microsoftedge.github.io")
     result = {
         "image_role": "INFORMATIVE",
         "alt_attribute_present": False,
@@ -134,10 +136,10 @@ def test_informative_defect_is_reported_after_consensus():
     nondet.exec_prompt = lambda prompt, images=None: json.dumps(result)
 
     report = contract.review_alt_text(
-        "https://www.w3.org/WAI/demos/bad/before/home",
-        "weather image of cloud and sun near the top",
+        "https://microsoftedge.github.io/Demos/devtools-a11y-testing/",
+        "the first cat photograph in the Cats section near the top",
         "",
-        "The image illustrates current weather information.",
+        "The photograph shows a cat's appearance and is informative, not decorative.",
     )
 
     assert report["decision"] == "ALT_DEFECT_CONFIRMED"
@@ -148,31 +150,31 @@ def test_informative_defect_is_reported_after_consensus():
 
 def test_adequate_informative_alt_is_not_called_a_defect():
     module, nondet = load_contract()
-    contract = module.AltTextReviewRegistry("w3.org")
+    contract = module.AltTextReviewRegistry("microsoftedge.github.io")
     result = {
         "image_role": "INFORMATIVE",
         "alt_attribute_present": True,
-        "observed_alt_text": "Citylights: your access to the city.",
+        "observed_alt_text": "Photo of Socke, a dog looking at the camera",
         "assessment": "ADEQUATE",
-        "image_locator": "site logo near page header",
+        "image_locator": "dog photograph in the Dogs section",
         "evidence": ["alt='Citylights: your access to the city.'"],
-        "reasoning": "The alternative communicates the image's site identity.",
+        "reasoning": "The alternative describes the dog's appearance.",
     }
     nondet.exec_prompt = lambda prompt, images=None: json.dumps(result)
 
     report = contract.review_alt_text(
-        "https://w3.org/WAI/demos/bad/before/home",
-        "citylights site logo",
-        "Citylights: your access to the city.",
+        "https://microsoftedge.github.io/Demos/devtools-a11y-testing/",
+        "dog photograph in the Dogs section",
+        "Photo of Socke, a dog looking at the camera",
     )
 
     assert report["decision"] == "ALT_SUPPORTED"
-    assert contract.get_report(1)["observed_alt_text"] == "Citylights: your access to the city."
+    assert contract.get_report(1)["observed_alt_text"] == "Photo of Socke, a dog looking at the camera"
 
 
 def test_decorative_image_requires_explicit_empty_alt():
     module, nondet = load_contract()
-    contract = module.AltTextReviewRegistry("w3.org")
+    contract = module.AltTextReviewRegistry("microsoftedge.github.io")
     result = {
         "image_role": "DECORATIVE",
         "alt_attribute_present": True,
@@ -185,7 +187,7 @@ def test_decorative_image_requires_explicit_empty_alt():
     nondet.exec_prompt = lambda prompt, images=None: json.dumps(result)
 
     report = contract.review_alt_text(
-        "https://w3.org/WAI/example",
+        "https://microsoftedge.github.io/Demos/example",
         "decorative divider image",
         "",
     )
@@ -195,7 +197,7 @@ def test_decorative_image_requires_explicit_empty_alt():
 
 def test_reported_alt_mismatch_and_ambiguous_image_fail_closed():
     module, nondet = load_contract()
-    contract = module.AltTextReviewRegistry("w3.org")
+    contract = module.AltTextReviewRegistry("microsoftedge.github.io")
     result = {
         "image_role": "INFORMATIVE",
         "alt_attribute_present": True,
@@ -206,18 +208,18 @@ def test_reported_alt_mismatch_and_ambiguous_image_fail_closed():
         "reasoning": "The caller's claimed value does not match the page.",
     }
     nondet.exec_prompt = lambda prompt, images=None: json.dumps(result)
-    mismatch = contract.review_alt_text("https://w3.org/example", "hero image", "Claimed text")
+    mismatch = contract.review_alt_text("https://microsoftedge.github.io/example", "hero image", "Claimed text")
     assert mismatch["decision"] == "NEEDS_REVIEW"
     assert mismatch["reason_code"] == "CALLER_ALT_TEXT_DIFFERS_FROM_PAGE"
 
     result.update(image_role="UNKNOWN", assessment="INCONCLUSIVE")
-    ambiguous = contract.review_alt_text("https://w3.org/example", "unclear image", "Claimed text")
+    ambiguous = contract.review_alt_text("https://microsoftedge.github.io/example", "unclear image", "Claimed text")
     assert ambiguous["decision"] == "NEEDS_REVIEW"
 
 
 def test_off_domain_input_is_rejected_before_consensus():
     module, nondet = load_contract()
-    contract = module.AltTextReviewRegistry("w3.org")
+    contract = module.AltTextReviewRegistry("microsoftedge.github.io")
     called = {"prompt": False}
     nondet.exec_prompt = lambda prompt, images=None: called.update(prompt=True) or "{}"
     try:
@@ -231,5 +233,5 @@ def test_off_domain_input_is_rejected_before_consensus():
 
 
 def test_domain_normalization_helper_uses_parsed_hostname():
-    value = "https://www.w3.org/WAI/demos/bad/before/home"
-    assert urlparse(value).hostname == "www.w3.org"
+    value = "https://microsoftedge.github.io/Demos/devtools-a11y-testing/"
+    assert urlparse(value).hostname == "microsoftedge.github.io"
